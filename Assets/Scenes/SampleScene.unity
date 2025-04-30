@@ -153,26 +153,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab71152be2e02c24cb7976df708dd91e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainWidth: 512
-  terrainHeight: 100
+  terrainWidth: 2048
+  terrainHeight: 50
   terrainResolution: 512
-  noiseScale: 100
-  octaves: 4
-  persistence: 0.5
-  lacunarity: 2
-  hillSharpness: 1.5
-  maxHillHeight: 0.8
+  noiseScale: 125
+  octaves: 5
+  persistence: 0.45
+  lacunarity: 1.25
+  hillSharpness: 0.9
+  maxHillHeight: 0.6
   useRandomSeed: 1
   seed: 0
-  terrainLayers: []
+  terrainLayers:
+  - terrainLayer: {fileID: 8574412962073106934, guid: 2f9ca0f2c54f77344b6df36b26de933f, type: 2}
+    maxHeight: 0.275
+  - terrainLayer: {fileID: 8574412962073106934, guid: 906ea75245880804aa869574650b5ab3, type: 2}
+    maxHeight: 0.8
+  - terrainLayer: {fileID: 8574412962073106934, guid: 672ce7548bc1dce4e90bb3082e201257, type: 2}
+    maxHeight: 1
   generateWater: 1
   waterHeight: 0.25
-  waterPrefab: {fileID: 0}
+  waterPrefab: {fileID: 8191337359296515599, guid: 8a8ade231d4e4115a527f463ebb01a8b, type: 3}
+  riverCount: 4
   riverWidth: 0.05
-  treePrefabs: []
-  forestDensity: 0.3
-  forestNoiseScale: 20
+  riverDepth: 0.5
+  riverSmoothness: 6
+  treePrefabs:
+  - {fileID: 114418, guid: be878d9ea17907f4a8068678a5ce7908, type: 3}
+  - {fileID: 114418, guid: 8b2d47fdc2e25ac4f9721480a68bbefa, type: 3}
+  - {fileID: 114418, guid: 956bd2acf7aae244dac8fc20cf57858d, type: 3}
+  - {fileID: 114418, guid: 9b8fc966f95ea9c4194dc091fc40b478, type: 3}
+  treeSpawnChance: 0.7
   grassLayer: {fileID: 0}
+  grassPrefab: {fileID: 0}
 --- !u!154 &119803095
 TerrainCollider:
   m_ObjectHideFlags: 0
@@ -283,7 +296,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -309,14 +322,14 @@ Light:
       e33: 1
     m_UseCullingMatrixOverride: 0
   m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
+  m_DrawHalo: 1
   m_Flare: {fileID: 0}
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 1
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
@@ -427,13 +440,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.06932254, y: 0.38762006, z: -0.029247344, w: 0.9187435}
+  m_LocalPosition: {x: -25.6, y: 158.2, z: -19.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 8.63, y: 45.75, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

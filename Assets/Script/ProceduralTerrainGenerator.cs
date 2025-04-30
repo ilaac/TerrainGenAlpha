@@ -30,13 +30,16 @@ public class ProceduralTerrainGenerator : MonoBehaviour
     public GameObject waterPrefab;
 
     [Header("River Settings")]
-    [Range(0f, 0.2f)] public float riverWidth = 0.05f;
+    public int riverCount = 3;
+    [Range(0.01f, 0.1f)] public float riverWidth = 0.03f;
+    public float riverDepth = 0.05f;
+    public int riverSmoothness = 10;
 
-    [Header("Forest Settings")]
+    [Header("Tree & Grass Settings")]
     public List<GameObject> treePrefabs = new List<GameObject>();
-    [Range(0f, 1f)] public float forestDensity = 0.3f;
-    public float forestNoiseScale = 20f;
+    [Range(0f, 1f)] public float treeSpawnChance = 0.01f;
     public TerrainLayer grassLayer;
+    public GameObject grassPrefab;
 
     private Terrain terrain;
     private TerrainData terrainData;
@@ -59,6 +62,7 @@ public class ProceduralTerrainGenerator : MonoBehaviour
             seed = Random.Range(0, 100000);
 
         heights = GenerateHeights();
+        ApplyRivers();
         SmoothHeights(2);
         terrainData.SetHeights(0, 0, heights);
         terrain.terrainData = terrainData;
@@ -66,21 +70,19 @@ public class ProceduralTerrainGenerator : MonoBehaviour
         ApplyTextures();
         SpawnWater();
         SpawnTrees();
+        SpawnGrass();
     }
 
     private float[,] GenerateHeights()
     {
-        float[,] heights = new float[terrainResolution, terrainResolution];
+        float[,] h = new float[terrainResolution, terrainResolution];
         System.Random prng = new System.Random(seed);
-        Vector2[] octaveOffsets = new Vector2[octaves];
+        Vector2[] offsets = new Vector2[octaves];
 
         for (int i = 0; i < octaves; i++)
-            octaveOffsets[i] = new Vector2(prng.Next(-100000, 100000), prng.Next(-100000, 100000));
-
-        // Create river path using a bezier-like line
-        Vector2 riverStart = new Vector2(0, prng.Next(terrainResolution / 4, 3 * terrainResolution / 4));
-        Vector2 riverEnd = new Vector2(terrainResolution - 1, prng.Next(terrainResolution / 4, 3 * terrainResolution / 4));
-        List<Vector2> riverPath = GenerateBezierRiverPath(riverStart, riverEnd, prng);
+        {
+            offsets[i] = new Vector2(prng.Next(-100000, 100000), prng.Next(-100000, 100000));
+        }
 
         for (int x = 0; x < terrainResolution; x++)
         {
@@ -92,10 +94,10 @@ public class ProceduralTerrainGenerator : MonoBehaviour
 
                 for (int i = 0; i < octaves; i++)
                 {
-                    float sampleX = (x + octaveOffsets[i].x) / noiseScale * frequency;
-                    float sampleY = (y + octaveOffsets[i].y) / noiseScale * frequency;
-                    float perlinValue = Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1;
-                    noiseHeight += perlinValue * amplitude;
+                    float sampleX = (x + offsets[i].x) / noiseScale * frequency;
+                    float sampleY = (y + offsets[i].y) / noiseScale * frequency;
+                    float perlin = Mathf.PerlinNoise(sampleX, sampleY) * 2 - 1;
+                    noiseHeight += perlin * amplitude;
 
                     amplitude *= persistence;
                     frequency *= lacunarity;
@@ -103,47 +105,73 @@ public class ProceduralTerrainGenerator : MonoBehaviour
 
                 float height = (noiseHeight + 1f) / 2f;
                 height = Mathf.Pow(height, hillSharpness);
-                height = Mathf.Min(height, maxHillHeight);
-
-                float riverEffect = GetRiverInfluence(x, y, riverPath);
-                height -= riverEffect;
-
-                heights[x, y] = Mathf.Clamp01(height);
+                h[x, y] = Mathf.Min(height, maxHillHeight);
             }
         }
 
-        return heights;
+        return h;
     }
 
-    private List<Vector2> GenerateBezierRiverPath(Vector2 start, Vector2 end, System.Random prng)
+    private void ApplyRivers()
     {
-        Vector2 control = new Vector2(terrainResolution / 2f, prng.Next(terrainResolution / 4, 3 * terrainResolution / 4));
-        List<Vector2> points = new List<Vector2>();
-
-        for (float t = 0; t <= 1f; t += 1f / terrainResolution)
+        for (int r = 0; r < riverCount; r++)
         {
-            Vector2 point = Mathf.Pow(1 - t, 2) * start + 2 * (1 - t) * t * control + Mathf.Pow(t, 2) * end;
-            points.Add(point);
-        }
+            Vector2 start = GetEdgePoint(r, true);
+            Vector2 end = GetEdgePoint(r, false);
+            Vector2 direction = (end - start).normalized;
 
-        return points;
+            Vector2 current = start;
+            for (int i = 0; i < riverSmoothness; i++)
+            {
+                float t = (float)i / riverSmoothness;
+                Vector2 bend = Vector2.Perpendicular(direction) * Mathf.Sin(t * Mathf.PI * 2 + seed) * 0.2f;
+                current += direction + bend;
+                CarveRiver(current, riverWidth, riverDepth);
+            }
+        }
     }
 
-    private float GetRiverInfluence(int x, int y, List<Vector2> riverPath)
+    private Vector2 GetEdgePoint(int index, bool start)
     {
-        float minDist = float.MaxValue;
-        foreach (var point in riverPath)
+        float edgeBuffer = 0.1f;
+        int resolution = terrainResolution;
+        System.Random rand = new System.Random(seed + index + (start ? 0 : 999));
+        int side = rand.Next(0, 4);
+        switch (side)
         {
-            float dist = Vector2.Distance(new Vector2(x, y), point);
-            if (dist < minDist) minDist = dist;
+            case 0: return new Vector2(0, rand.Next((int)(resolution * edgeBuffer), (int)(resolution * (1 - edgeBuffer))));
+            case 1: return new Vector2(resolution - 1, rand.Next((int)(resolution * edgeBuffer), (int)(resolution * (1 - edgeBuffer))));
+            case 2: return new Vector2(rand.Next((int)(resolution * edgeBuffer), (int)(resolution * (1 - edgeBuffer))), 0);
+            case 3: return new Vector2(rand.Next((int)(resolution * edgeBuffer), (int)(resolution * (1 - edgeBuffer))), resolution - 1);
+            default: return new Vector2(0, 0);
         }
-
-        return Mathf.Clamp01(1 - minDist / (riverWidth * terrainResolution)) * 0.05f;
     }
 
-    private void SmoothHeights(int iterations)
+    private void CarveRiver(Vector2 center, float width, float depth)
     {
-        for (int it = 0; it < iterations; it++)
+        int radius = Mathf.CeilToInt(width * terrainResolution);
+        int cx = Mathf.RoundToInt(center.x);
+        int cy = Mathf.RoundToInt(center.y);
+
+        for (int x = -radius; x <= radius; x++)
+        {
+            for (int y = -radius; y <= radius; y++)
+            {
+                int tx = cx + x;
+                int ty = cy + y;
+                if (tx >= 0 && ty >= 0 && tx < terrainResolution && ty < terrainResolution)
+                {
+                    float dist = new Vector2(x, y).magnitude / radius;
+                    float depthMultiplier = Mathf.Clamp01(1f - dist);
+                    heights[tx, ty] = Mathf.Clamp01(heights[tx, ty] - depth * depthMultiplier);
+                }
+            }
+        }
+    }
+
+    private void SmoothHeights(int passes)
+    {
+        for (int i = 0; i < passes; i++)
         {
             float[,] smoothed = new float[terrainResolution, terrainResolution];
 
@@ -151,14 +179,14 @@ public class ProceduralTerrainGenerator : MonoBehaviour
             {
                 for (int y = 1; y < terrainResolution - 1; y++)
                 {
-                    float sum =
-                        heights[x, y] +
-                        heights[x + 1, y] +
-                        heights[x - 1, y] +
-                        heights[x, y + 1] +
-                        heights[x, y - 1];
+                    float avg =
+                        (heights[x, y] +
+                         heights[x + 1, y] +
+                         heights[x - 1, y] +
+                         heights[x, y + 1] +
+                         heights[x, y - 1]) / 5f;
 
-                    smoothed[x, y] = sum / 5f;
+                    smoothed[x, y] = avg;
                 }
             }
 
@@ -172,22 +200,23 @@ public class ProceduralTerrainGenerator : MonoBehaviour
 
         TerrainLayer[] layers = new TerrainLayer[terrainLayers.Count];
         for (int i = 0; i < terrainLayers.Count; i++)
+        {
             layers[i] = terrainLayers[i].terrainLayer;
+        }
 
         terrainData.terrainLayers = layers;
-
-        float[,,] splatmap = new float[terrainResolution, terrainResolution, terrainLayers.Count];
+        float[,,] splatmap = new float[terrainResolution, terrainResolution, layers.Length];
 
         for (int x = 0; x < terrainResolution; x++)
         {
             for (int y = 0; y < terrainResolution; y++)
             {
-                float height = heights[x, y];
-                for (int i = 0; i < terrainLayers.Count; i++)
+                float norm = heights[x, y];
+                for (int l = 0; l < terrainLayers.Count; l++)
                 {
-                    if (height <= terrainLayers[i].maxHeight)
+                    if (norm <= terrainLayers[l].maxHeight)
                     {
-                        splatmap[x, y, i] = 1;
+                        splatmap[x, y, l] = 1;
                         break;
                     }
                 }
@@ -199,14 +228,13 @@ public class ProceduralTerrainGenerator : MonoBehaviour
 
     private void SpawnWater()
     {
-        if (!generateWater || waterPrefab == null)
-            return;
+        if (!generateWater || waterPrefab == null) return;
 
         if (waterObject != null)
             Destroy(waterObject);
 
-        Vector3 waterPos = new Vector3(terrainWidth / 2f, waterHeight * terrainHeight, terrainWidth / 2f);
-        waterObject = Instantiate(waterPrefab, waterPos, Quaternion.identity, transform);
+        Vector3 pos = new Vector3(terrainWidth / 2f, waterHeight * terrainHeight, terrainWidth / 2f);
+        waterObject = Instantiate(waterPrefab, pos, Quaternion.identity, transform);
         waterObject.transform.localScale = new Vector3(terrainWidth / 10f, 1, terrainWidth / 10f);
     }
 
@@ -214,28 +242,54 @@ public class ProceduralTerrainGenerator : MonoBehaviour
     {
         if (treePrefabs.Count == 0) return;
 
-        for (int x = 0; x < terrainResolution; x += 3)
+        for (int x = 5; x < terrainResolution; x += 5)
         {
-            for (int y = 0; y < terrainResolution; y += 3)
+            for (int y = 5; y < terrainResolution; y += 5)
             {
+                if (Random.value > treeSpawnChance) continue;
+
                 float height = heights[x, y];
                 if (height < waterHeight) continue;
 
-                float forestNoise = Mathf.PerlinNoise((x + seed) / forestNoiseScale, (y + seed) / forestNoiseScale);
-                if (forestNoise < forestDensity)
+                Vector3 worldPos = new Vector3(
+                    (float)x / terrainResolution * terrainWidth,
+                    height * terrainHeight,
+                    (float)y / terrainResolution * terrainWidth
+                );
+
+                RaycastHit hit;
+                if (Physics.Raycast(worldPos + Vector3.up * 10, Vector3.down, out hit, 20f))
                 {
-                    Vector3 pos = new Vector3(
-                        (float)x / terrainResolution * terrainWidth,
-                        height * terrainHeight,
-                        (float)y / terrainResolution * terrainWidth
-                    );
+                    GameObject treePrefab = treePrefabs[Random.Range(0, treePrefabs.Count)];
+                    GameObject treeInstance = Instantiate(treePrefab, hit.point, Quaternion.Euler(0, Random.Range(0f, 360f), 0), transform);
+                }
+            }
+        }
+    }
 
-                    Vector3 worldPos = transform.position + pos;
-                    if (!Physics.Raycast(worldPos + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f)) continue;
+    private void SpawnGrass()
+    {
+        if (grassPrefab == null || grassLayer == null) return;
 
-                    GameObject tree = treePrefabs[Random.Range(0, treePrefabs.Count)];
-                    GameObject instance = Instantiate(tree, hit.point, Quaternion.identity, transform);
-                    instance.transform.rotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0f);
+        for (int x = 0; x < terrainResolution; x += 2)
+        {
+            for (int y = 0; y < terrainResolution; y += 2)
+            {
+                float height = heights[x, y];
+                Vector3 worldPos = new Vector3(
+                    (float)x / terrainResolution * terrainWidth,
+                    height * terrainHeight,
+                    (float)y / terrainResolution * terrainWidth
+                );
+
+                int index = terrainLayers.FindIndex(t => t.terrainLayer == grassLayer);
+                if (index >= 0)
+                {
+                    float[,,] map = terrainData.GetAlphamaps(x, y, 1, 1);
+                    if (map[0, 0, index] > 0.5f)
+                    {
+                        Instantiate(grassPrefab, worldPos, Quaternion.identity, transform);
+                    }
                 }
             }
         }
