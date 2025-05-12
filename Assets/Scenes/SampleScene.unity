@@ -153,39 +153,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab71152be2e02c24cb7976df708dd91e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainWidth: 2048
+  terrainWidth: 10000
   terrainHeight: 50
   terrainResolution: 512
   noiseScale: 125
-  octaves: 5
-  persistence: 0.45
+  octaves: 6
+  persistence: 0.5
   lacunarity: 1.25
-  hillSharpness: 0.9
-  maxHillHeight: 0.6
+  hillSharpness: 0.95
+  maxHillHeight: 0.55
   useRandomSeed: 1
   seed: 0
+  generateRiver: 1
+  numberOfRivers: 7
+  riverWidths:
+  - 0.03
+  - 0.0275
+  - 0.0275
+  - 0.0275
+  - 0.0275
+  - 0.0275
+  - 0.0275
+  riverPoints: 82
+  generateWater: 1
+  waterHeight: 0.3
+  waterPrefab: {fileID: 8191337359296515599, guid: 8a8ade231d4e4115a527f463ebb01a8b, type: 3}
   terrainLayers:
   - terrainLayer: {fileID: 8574412962073106934, guid: 2f9ca0f2c54f77344b6df36b26de933f, type: 2}
-    maxHeight: 0.275
+    maxHeight: 0.3
   - terrainLayer: {fileID: 8574412962073106934, guid: 906ea75245880804aa869574650b5ab3, type: 2}
     maxHeight: 0.8
   - terrainLayer: {fileID: 8574412962073106934, guid: 672ce7548bc1dce4e90bb3082e201257, type: 2}
     maxHeight: 1
-  generateWater: 1
-  waterHeight: 0.25
-  waterPrefab: {fileID: 8191337359296515599, guid: 8a8ade231d4e4115a527f463ebb01a8b, type: 3}
-  riverCount: 4
-  riverWidth: 0.05
-  riverDepth: 0.5
-  riverSmoothness: 6
   treePrefabs:
   - {fileID: 114418, guid: be878d9ea17907f4a8068678a5ce7908, type: 3}
   - {fileID: 114418, guid: 8b2d47fdc2e25ac4f9721480a68bbefa, type: 3}
   - {fileID: 114418, guid: 956bd2acf7aae244dac8fc20cf57858d, type: 3}
   - {fileID: 114418, guid: 9b8fc966f95ea9c4194dc091fc40b478, type: 3}
-  treeSpawnChance: 0.7
-  grassLayer: {fileID: 0}
-  grassPrefab: {fileID: 0}
+  treeSpawnChance: 0.503
+  forestDensityScale: 100
 --- !u!154 &119803095
 TerrainCollider:
   m_ObjectHideFlags: 0
