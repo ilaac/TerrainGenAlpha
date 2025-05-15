@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_Fog: 1
+  m_FogColor: {r: 0.6509434, g: 0.6509434, b: 0.6509434, a: 0.65882355}
   m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogDensity: 0.0002
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -150,7 +150,7 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Color: {r: 0.95686275, g: 1, b: 0.8980392, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -184,7 +184,7 @@ Light:
     m_UseCullingMatrixOverride: 0
   m_Cookie: {fileID: 0}
   m_DrawHalo: 1
-  m_Flare: {fileID: 0}
+  m_Flare: {fileID: 12100000, guid: 4da7d46f86e3444bbb0317ffa758cc52, type: 2}
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
@@ -209,13 +209,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.39756605, y: 0.34557873, z: -0.16475853, w: 0.83388925}
+  m_LocalPosition: {x: -5.32, y: 13211, z: 687.98}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 50.98, y: 45.02, z: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,7 +275,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 26.991467
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -357,32 +357,52 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
-      propertyPath: lacunarity
-      value: 1.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
-      propertyPath: waterDepth
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
-      propertyPath: riverPoints
-      value: 90
-      objectReference: {fileID: 0}
-    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
-      propertyPath: numberOfRivers
+      propertyPath: octaves
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: lacunarity
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: waterDepth
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: riverPoints
+      value: 250
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: terrainWidth
+      value: 3000
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: useRandomSeed
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: numberOfRivers
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: treeSpawnChance
-      value: 1.34
+      value: 0.37
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: forestPaintRadius
       value: 2.3
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: forestDensityScale
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: riverBendSmoothness
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[0]
-      value: 0.0335
+      value: 0.0325
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[1]

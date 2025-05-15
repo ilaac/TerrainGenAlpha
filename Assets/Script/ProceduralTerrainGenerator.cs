@@ -14,7 +14,6 @@ public class ProceduralTerrainGenerator : MonoBehaviour
     public float lacunarity = 2.0f;
     public float hillSharpness = 1.5f;
     public float maxHillHeight = 0.8f;
-    [Range(0f, 1f)] public float cliffSmoothness = 0.3f;
 
     [Header("Seed Settings")] public bool useRandomSeed = true;
     public int seed = 0;
@@ -35,7 +34,10 @@ public class ProceduralTerrainGenerator : MonoBehaviour
     public List<GameObject> treePrefabs = new List<GameObject>();
     [Range(0f, 5f)] public float treeSpawnChance = 0.02f;
     public float forestDensityScale = 30f;
+
+    [Tooltip("Index in terrainLayers for the forest floor texture. Starts at 0.")]
     public int forestLayerIndex = 0;
+
     [Range(1f, 20f)] public float forestPaintRadius = 4f;
 
     private Terrain terrain;
@@ -60,7 +62,6 @@ public class ProceduralTerrainGenerator : MonoBehaviour
             seed = Random.Range(0, 100000);
 
         heights = GenerateHeights();
-        SmoothSteepSlopes(heights, cliffSmoothness);
         SmoothHeights(2);
         terrainData.SetHeights(0, 0, heights);
 
@@ -103,37 +104,8 @@ public class ProceduralTerrainGenerator : MonoBehaviour
             }
         }
 
-        if (generateRiver)
-            CarveRivers(h);
-
+        if (generateRiver) CarveRivers(h);
         return h;
-    }
-
-    private void SmoothSteepSlopes(float[,] h, float strength)
-    {
-        int w = terrainResolution;
-        int hRes = terrainResolution;
-
-        float[,] temp = (float[,])h.Clone();
-
-        for (int x = 1; x < w - 1; x++)
-        {
-            for (int y = 1; y < hRes - 1; y++)
-            {
-                float center = h[x, y];
-                float average = (
-                    h[x + 1, y] + h[x - 1, y] + h[x, y + 1] + h[x, y - 1]
-                ) / 4f;
-
-                float diff = center - average;
-                if (Mathf.Abs(diff) > 0.02f)
-                    temp[x, y] = Mathf.Lerp(center, average, strength);
-            }
-        }
-
-        for (int x = 1; x < w - 1; x++)
-            for (int y = 1; y < hRes - 1; y++)
-                h[x, y] = temp[x, y];
     }
 
     private void CarveRivers(float[,] h)
@@ -211,7 +183,7 @@ public class ProceduralTerrainGenerator : MonoBehaviour
     private void CarveRiverOnTerrain(float[,] h, List<Vector2> path, float width)
     {
         int radius = Mathf.CeilToInt(width * terrainResolution * 0.5f);
-        float maxDepth = Mathf.Max(0.01f, width * 2f);
+        float maxDepth = Mathf.Max(0.01f, width * 2f); // Ensures small rivers carve deep enough
 
         foreach (Vector2 point in path)
         {
@@ -330,23 +302,25 @@ public class ProceduralTerrainGenerator : MonoBehaviour
 
                 int radius = Mathf.CeilToInt(forestPaintRadius);
                 for (int dx = -radius; dx <= radius; dx++)
-                for (int dy = -radius; dy <= radius; dy++)
                 {
-                    int px = x + dx;
-                    int py = y + dy;
-
-                    if (px < 0 || py < 0 || px >= terrainResolution || py >= terrainResolution) continue;
-
-                    float dist = Mathf.Sqrt(dx * dx + dy * dy) / forestPaintRadius;
-                    if (dist > 1f) continue;
-
-                    float strength = Mathf.Pow(1f - dist, 1.5f);
-                    for (int j = 0; j < terrainData.alphamapLayers; j++)
+                    for (int dy = -radius; dy <= radius; dy++)
                     {
-                        if (j == forestLayerIndex)
-                            alphaMap[py, px, j] = Mathf.Max(alphaMap[py, px, j], strength);
-                        else
-                            alphaMap[py, px, j] *= (1f - strength);
+                        int px = x + dx;
+                        int py = y + dy;
+
+                        if (px < 0 || py < 0 || px >= terrainResolution || py >= terrainResolution) continue;
+
+                        float dist = Mathf.Sqrt(dx * dx + dy * dy) / forestPaintRadius;
+                        if (dist > 1f) continue;
+
+                        float strength = Mathf.Pow(1f - dist, 1.5f);
+                        for (int j = 0; j < terrainData.alphamapLayers; j++)
+                        {
+                            if (j == forestLayerIndex)
+                                alphaMap[py, px, j] = Mathf.Max(alphaMap[py, px, j], strength);
+                            else
+                                alphaMap[py, px, j] *= (1f - strength);
+                        }
                     }
                 }
 
