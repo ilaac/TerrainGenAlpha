@@ -4,41 +4,57 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Terrain))]
 public class ProceduralTerrainGenerator : MonoBehaviour
 {
-    [Header("General Settings")] public int terrainWidth = 512;
+    [Header("General Settings")]
+    public int terrainWidth = 512;
     public int terrainHeight = 100;
     public int terrainResolution = 512;
 
-    [Header("Noise Settings")] public float noiseScale = 100f;
+    [Header("Noise Settings")]
+    public float noiseScale = 100f;
     public int octaves = 4;
     public float persistence = 0.5f;
     public float lacunarity = 2.0f;
     public float hillSharpness = 1.5f;
     public float maxHillHeight = 0.8f;
 
-    [Header("Seed Settings")] public bool useRandomSeed = true;
+    [Header("Seed Settings")]
+    public bool useRandomSeed = true;
     public int seed = 0;
 
-    [Header("River Settings")] public bool generateRiver = true;
-    [Range(1, 10)] public int numberOfRivers = 3;
-    public List<float> riverWidths = new List<float>() { 0.02f, 0.015f, 0.01f };
+    [Header("River Settings")]
+    public bool generateRiver = true;
+    [Range(1, 5)]
+    public int numberOfMainRivers = 1;
+    [Range(0, 10)]
+    public int numberOfSideRivers = 3;
+    public List<float> mainRiverWidths = new List<float> { 0.35f }; // Widths for main rivers
+    public List<float> sideRiverWidths = new List<float> { 0.15f, 0.15f, 0.15f }; // Widths for side rivers
+    public List<float> mainRiverDepths = new List<float> { 0.2f }; // Depths for main rivers
+    public List<float> sideRiverDepths = new List<float> { 0.1f, 0.1f, 0.1f }; // Depths for side rivers
     public int riverPoints = 100;
+    public int sideRiverPoints = 50; // Fewer points for side rivers
+    public float sideRiverCurvature = 0.05f; // Controls how much side rivers curve
 
-    [Header("Water Settings")] public bool generateWater = true;
+    [Header("Water Settings")]
+    public bool generateWater = true;
     public float waterHeight = 0.25f;
     public float waterDepth = 0.25f;
     public GameObject waterPrefab;
 
-    [Header("Texture Layers")] public List<LayerTexture> terrainLayers = new List<LayerTexture>();
+    [Header("Texture Layers")]
+    public List<LayerTexture> terrainLayers = new List<LayerTexture>();
 
     [Header("Forest Settings")]
     public List<GameObject> treePrefabs = new List<GameObject>();
-    [Range(0f, 5f)] public float treeSpawnChance = 0.02f;
+    [Range(0f, 5f)]
+    public float treeSpawnChance = 0.02f;
     public float forestDensityScale = 30f;
 
     [Tooltip("Index in terrainLayers for the forest floor texture. Starts at 0.")]
     public int forestLayerIndex = 0;
 
-    [Range(1f, 20f)] public float forestPaintRadius = 4f;
+    [Range(1f, 20f)]
+    public float forestPaintRadius = 4f;
 
     private Terrain terrain;
     private TerrainData terrainData;
@@ -113,20 +129,38 @@ public class ProceduralTerrainGenerator : MonoBehaviour
         allRiverPaths = new List<List<Vector2>>();
         System.Random prng = new System.Random(seed + 1000);
 
-        while (riverWidths.Count < numberOfRivers)
-            riverWidths.Add(0.005f);
+        // Ensure riverWidths and riverDepths lists have correct number of entries
+        while (mainRiverWidths.Count < numberOfMainRivers)
+            mainRiverWidths.Add(0.35f); // Default width for main rivers
+        while (sideRiverWidths.Count < numberOfSideRivers)
+            sideRiverWidths.Add(0.15f); // Default width for side rivers
+        while (mainRiverDepths.Count < numberOfMainRivers)
+            mainRiverDepths.Add(0.2f); // Default depth for main rivers
+        while (sideRiverDepths.Count < numberOfSideRivers)
+            sideRiverDepths.Add(0.1f); // Default depth for side rivers
 
-        var mainRiver = GenerateRiverPath(prng.Next(), true);
-        allRiverPaths.Add(mainRiver);
-
-        for (int i = 1; i < numberOfRivers; i++)
+        // Generate main rivers (spanning top to bottom)
+        for (int i = 0; i < numberOfMainRivers; i++)
         {
-            Vector2 branchStart = mainRiver[prng.Next(mainRiver.Count / 4, 3 * mainRiver.Count / 4)];
-            allRiverPaths.Add(GenerateBranchRiverPath(prng.Next(), branchStart));
+            List<Vector2> mainRiver = GenerateRiverPath(prng.Next(), fullSpan: true);
+            allRiverPaths.Add(mainRiver);
+            float riverWidth = (i < mainRiverWidths.Count) ? mainRiverWidths[i] : 0.35f;
+            float riverDepth = (i < mainRiverDepths.Count) ? mainRiverDepths[i] : 0.2f;
+            CarveRiverOnTerrain(h, mainRiver, riverWidth, riverDepth);
         }
 
-        for (int i = 0; i < allRiverPaths.Count; i++)
-            CarveRiverOnTerrain(h, allRiverPaths[i], riverWidths[i]);
+        // Generate side rivers (randomly placed, shorter)
+        for (int i = 0; i < numberOfSideRivers; i++)
+        {
+            List<Vector2> sideRiver = GenerateSideRiverPath(prng.Next(), h);
+            allRiverPaths.Add(sideRiver);
+            float riverWidth = (i < sideRiverWidths.Count) ? sideRiverWidths[i] : 0.15f;
+            float riverDepth = (i < sideRiverDepths.Count) ? sideRiverDepths[i] : 0.1f;
+            CarveRiverOnTerrain(h, sideRiver, riverWidth, riverDepth);
+        }
+
+        // Smooth river areas for natural transitions
+        SmoothRiverAreas(h);
     }
 
     private List<Vector2> GenerateRiverPath(int localSeed, bool fullSpan = false)
@@ -143,8 +177,10 @@ public class ProceduralTerrainGenerator : MonoBehaviour
         {
             float t = i / (float)(riverPoints - 1);
             Vector2 target = Vector2.Lerp(start, end, t);
-            float offsetX = (Mathf.PerlinNoise(i * 0.5f, seed) - 0.5f) * terrainResolution * 0.2f;
+
+            float offsetX = (Mathf.PerlinNoise(i * 0.1f, localSeed) - 0.5f) * terrainResolution * 0.05f;
             target.x += offsetX;
+
             current = Vector2.Lerp(current, target, 0.5f);
             current.x = Mathf.Clamp(current.x, 0, terrainResolution - 1);
             current.y = Mathf.Clamp(current.y, 0, terrainResolution - 1);
@@ -154,36 +190,141 @@ public class ProceduralTerrainGenerator : MonoBehaviour
         return path;
     }
 
-    private List<Vector2> GenerateBranchRiverPath(int localSeed, Vector2 start)
+    private List<Vector2> GenerateSideRiverPath(int localSeed, float[,] heightmap)
     {
         System.Random prng = new System.Random(localSeed);
         List<Vector2> path = new List<Vector2>();
-        Vector2 current = start * terrainResolution;
+
+        // Random start point anywhere on the map
+        Vector2 start = new Vector2(prng.Next(0, terrainResolution), prng.Next(0, terrainResolution));
+        Vector2 current = start;
         path.Add(current / terrainResolution);
 
-        Vector2 direction = new Vector2(prng.Next(-1, 2), prng.Next(-1, 1)).normalized;
-        if (direction == Vector2.zero) direction = new Vector2(1, -1).normalized;
+        // Random initial direction
+        float angle = prng.Next(0, 360);
+        float angleRad = angle * Mathf.Deg2Rad;
+        Vector2 direction = new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad));
+        float maxDistance = terrainResolution / 4f;
+        float distance = prng.Next(terrainResolution / 8, Mathf.RoundToInt(maxDistance));
 
-        for (int i = 0; i < riverPoints / 2; i++)
+        // Initial end point
+        Vector2 end = current + direction * distance;
+        end = FindDownhillEndPoint(current, end, heightmap, prng);
+        end.x = Mathf.Clamp(end.x, 0, terrainResolution - 1);
+        end.y = Mathf.Clamp(end.y, 0, terrainResolution - 1);
+        end = AdjustEndPointToAvoidCrossings(current, end, allRiverPaths.Count);
+
+        // Generate path with natural curves
+        for (int i = 1; i < sideRiverPoints; i++)
         {
-            Vector2 noise = new Vector2(
-                Mathf.PerlinNoise(i * 0.2f, localSeed) - 0.5f,
-                Mathf.PerlinNoise(i * 0.2f + 1000, localSeed) - 0.5f
-            ) * 20f;
+            float t = i / (float)(sideRiverPoints - 1);
 
-            current += direction * 8f + noise;
+            // Use Perlin noise for smooth, natural curves
+            float offsetX = (Mathf.PerlinNoise(i * 0.1f, localSeed) - 0.5f) * terrainResolution * sideRiverCurvature;
+            float offsetY = (Mathf.PerlinNoise(i * 0.1f + 1000, localSeed) - 0.5f) * terrainResolution * sideRiverCurvature;
+
+            // Move towards downhill direction
+            Vector2 gradient = CalculateGradient(current, heightmap);
+            Vector2 target = current + (gradient.normalized + direction) * (distance / sideRiverPoints);
+            target += new Vector2(offsetX, offsetY);
+
+            current = Vector2.Lerp(current, target, 0.5f);
             current.x = Mathf.Clamp(current.x, 0, terrainResolution - 1);
             current.y = Mathf.Clamp(current.y, 0, terrainResolution - 1);
+
+            // Update direction to follow terrain
+            direction = (target - current).normalized;
             path.Add(current / terrainResolution);
         }
 
         return path;
     }
 
-    private void CarveRiverOnTerrain(float[,] h, List<Vector2> path, float width)
+    private Vector2 CalculateGradient(Vector2 point, float[,] heightmap)
+    {
+        int x = Mathf.RoundToInt(point.x);
+        int y = Mathf.RoundToInt(point.y);
+        x = Mathf.Clamp(x, 1, terrainResolution - 2);
+        y = Mathf.Clamp(y, 1, terrainResolution - 2);
+
+        float dx = heightmap[x + 1, y] - heightmap[x - 1, y];
+        float dy = heightmap[x, y + 1] - heightmap[x, y - 1];
+        return new Vector2(-dx, -dy).normalized;
+    }
+
+    private Vector2 FindDownhillEndPoint(Vector2 start, Vector2 proposedEnd, float[,] heightmap, System.Random prng)
+    {
+        int x = Mathf.RoundToInt(proposedEnd.x);
+        int y = Mathf.RoundToInt(proposedEnd.y);
+        x = Mathf.Clamp(x, 0, terrainResolution - 1);
+        y = Mathf.Clamp(y, 0, terrainResolution - 1);
+
+        float startHeight = heightmap[Mathf.RoundToInt(start.x), Mathf.RoundToInt(start.y)];
+        float currentHeight = heightmap[x, y];
+        Vector2 bestEnd = proposedEnd;
+        float bestHeight = currentHeight;
+
+        // Sample more points for better downhill path
+        int searchRadius = terrainResolution / 8;
+        for (int i = 0; i < 20; i++)
+        {
+            int sx = prng.Next(-searchRadius, searchRadius) + x;
+            int sy = prng.Next(-searchRadius, searchRadius) + y;
+            sx = Mathf.Clamp(sx, 0, terrainResolution - 1);
+            sy = Mathf.Clamp(sy, 0, terrainResolution - 1);
+
+            float sampleHeight = heightmap[sx, sy];
+            if (sampleHeight < startHeight && sampleHeight < bestHeight)
+            {
+                bestEnd = new Vector2(sx, sy);
+                bestHeight = sampleHeight;
+            }
+        }
+
+        return bestEnd;
+    }
+
+    private Vector2 AdjustEndPointToAvoidCrossings(Vector2 start, Vector2 end, int riverIndex)
+    {
+        Vector2 adjustedEnd = end;
+        for (int i = 0; i < allRiverPaths.Count; i++)
+        {
+            if (i >= riverIndex) continue; // Only check against previous rivers
+            List<Vector2> otherPath = allRiverPaths[i];
+
+            // Convert to pixel coordinates
+            List<Vector2> otherPathPx = new List<Vector2>();
+            foreach (Vector2 p in otherPath)
+                otherPathPx.Add(p * terrainResolution);
+
+            // Check if the proposed path intersects
+            for (int j = 1; j < sideRiverPoints; j++)
+            {
+                float t = j / (float)(sideRiverPoints - 1);
+                Vector2 testPoint = Vector2.Lerp(start, end, t);
+                foreach (Vector2 otherPoint in otherPathPx)
+                {
+                    if (Vector2.Distance(testPoint, otherPoint) < terrainResolution * 0.05f)
+                    {
+                        // Adjust end point by rotating slightly
+                        float angle = Mathf.Atan2(end.y - start.y, end.x - start.x) * Mathf.Rad2Deg + 30f;
+                        float distance = Vector2.Distance(start, end);
+                        float angleRad = angle * Mathf.Deg2Rad;
+                        adjustedEnd = start + new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad)) * distance;
+                        adjustedEnd.x = Mathf.Clamp(adjustedEnd.x, 0, terrainResolution - 1);
+                        adjustedEnd.y = Mathf.Clamp(adjustedEnd.y, 0, terrainResolution - 1);
+                        break;
+                    }
+                }
+            }
+        }
+        return adjustedEnd;
+    }
+
+    private void CarveRiverOnTerrain(float[,] h, List<Vector2> path, float width, float maxDepth)
     {
         int radius = Mathf.CeilToInt(width * terrainResolution * 0.5f);
-        float maxDepth = Mathf.Max(0.01f, width * 2f); // Ensures small rivers carve deep enough
+        maxDepth = Mathf.Max(0.01f, maxDepth);
 
         foreach (Vector2 point in path)
         {
@@ -203,12 +344,68 @@ public class ProceduralTerrainGenerator : MonoBehaviour
                     float dist = Vector2.Distance(new Vector2(nx, ny), new Vector2(cx, cy)) / radius;
                     if (dist < 1f)
                     {
-                        float depth = maxDepth * (1f - dist);
+                        float depth = maxDepth * Mathf.Pow(1f - dist, 2f); // Quadratic falloff for smoother edges
                         h[nx, ny] = Mathf.Min(h[nx, ny], waterHeight - depth);
                     }
                 }
             }
         }
+    }
+
+    private void SmoothRiverAreas(float[,] h)
+    {
+        float[,] temp = (float[,])h.Clone();
+        int radius = Mathf.CeilToInt(terrainResolution * 0.05f); // Smoothing radius around rivers
+
+        foreach (List<Vector2> path in allRiverPaths)
+        {
+            foreach (Vector2 point in path)
+            {
+                int cx = Mathf.RoundToInt(point.x * terrainResolution);
+                int cy = Mathf.RoundToInt(point.y * terrainResolution);
+
+                for (int x = -radius; x <= radius; x++)
+                {
+                    for (int y = -radius; y <= radius; y++)
+                    {
+                        int nx = cx + x;
+                        int ny = cy + y;
+
+                        if (nx < 1 || ny < 1 || nx >= terrainResolution - 1 || ny >= terrainResolution - 1)
+                            continue;
+
+                        float dist = Vector2.Distance(new Vector2(nx, ny), new Vector2(cx, cy)) / radius;
+                        if (dist < 1f)
+                        {
+                            float weight = Mathf.Exp(-dist * dist); // Gaussian-like smoothing
+                            float sum = 0f;
+                            float weightSum = 0f;
+
+                            for (int dx = -1; dx <= 1; dx++)
+                            {
+                                for (int dy = -1; dy <= 1; dy++)
+                                {
+                                    int sx = nx + dx;
+                                    int sy = ny + dy;
+                                    if (sx < 0 || sy < 0 || sx >= terrainResolution || sy >= terrainResolution)
+                                        continue;
+
+                                    float w = Mathf.Exp(-Vector2.Distance(new Vector2(sx, sy), new Vector2(nx, ny)));
+                                    sum += h[sx, sy] * w;
+                                    weightSum += w;
+                                }
+                            }
+
+                            temp[nx, ny] = sum / weightSum;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < terrainResolution; x++)
+        for (int y = 0; y < terrainResolution; y++)
+            h[x, y] = temp[x, y];
     }
 
     private void SmoothHeights(int iterations)
@@ -302,25 +499,23 @@ public class ProceduralTerrainGenerator : MonoBehaviour
 
                 int radius = Mathf.CeilToInt(forestPaintRadius);
                 for (int dx = -radius; dx <= radius; dx++)
+                for (int dy = -radius; dy <= radius; dy++)
                 {
-                    for (int dy = -radius; dy <= radius; dy++)
+                    int px = x + dx;
+                    int py = y + dy;
+
+                    if (px < 0 || py < 0 || px >= terrainResolution || py >= terrainResolution) continue;
+
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy) / forestPaintRadius;
+                    if (dist > 1f) continue;
+
+                    float strength = Mathf.Pow(1f - dist, 1.5f);
+                    for (int j = 0; j < terrainData.alphamapLayers; j++)
                     {
-                        int px = x + dx;
-                        int py = y + dy;
-
-                        if (px < 0 || py < 0 || px >= terrainResolution || py >= terrainResolution) continue;
-
-                        float dist = Mathf.Sqrt(dx * dx + dy * dy) / forestPaintRadius;
-                        if (dist > 1f) continue;
-
-                        float strength = Mathf.Pow(1f - dist, 1.5f);
-                        for (int j = 0; j < terrainData.alphamapLayers; j++)
-                        {
-                            if (j == forestLayerIndex)
-                                alphaMap[py, px, j] = Mathf.Max(alphaMap[py, px, j], strength);
-                            else
-                                alphaMap[py, px, j] *= (1f - strength);
-                        }
+                        if (j == forestLayerIndex)
+                            alphaMap[py, px, j] = Mathf.Max(alphaMap[py, px, j], strength);
+                        else
+                            alphaMap[py, px, j] *= (1f - strength);
                     }
                 }
 

@@ -374,7 +374,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: terrainWidth
-      value: 3000
+      value: 10000
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: useRandomSeed
@@ -382,11 +382,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: numberOfRivers
-      value: 3
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: sideRiverPoints
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: treeSpawnChance
-      value: 0.37
+      value: 4.34
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: forestPaintRadius
@@ -395,6 +399,14 @@ PrefabInstance:
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: forestDensityScale
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: numberOfMainRivers
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: numberOfSideRivers
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverBendSmoothness
@@ -406,39 +418,75 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[1]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[2]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[3]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[4]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[5]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[6]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[7]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[8]
-      value: 0.0325
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: riverWidths.Array.data[9]
-      value: 0.0325
+      value: 0.0125
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: mainRiverWidths.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: sideRiverWidths.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: mainRiverWidths.Array.data[0]
+      value: 0.035
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: mainRiverWidths.Array.data[1]
+      value: 0.035
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: mainRiverWidths.Array.data[2]
+      value: 0.035
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: sideRiverWidths.Array.data[0]
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: sideRiverWidths.Array.data[1]
+      value: 0.0125
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: sideRiverWidths.Array.data[2]
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 3535534191437609622, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
+      propertyPath: sideRiverWidths.Array.data[3]
+      value: 0.0125
       objectReference: {fileID: 0}
     - target: {fileID: 6061434127566681366, guid: 8e08962ff180eaf4fb94da6abda5bde0, type: 3}
       propertyPath: m_Name
